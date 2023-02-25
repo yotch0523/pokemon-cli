@@ -10,20 +10,19 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
+var name string
+
 // findCmd represents the find command
 var findCmd = &cobra.Command{
 	Use:   "find",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "'pokemon-cli' is a CLI to search for Pokemon by various filter",
+	Long: `'pokemon-cli' is a CLI to sarch for Pokemon
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		getPokemonData()
 	},
@@ -48,6 +47,10 @@ type Monster struct {
 type Type string
 
 func getPokemonData() {
+	if name == "" {
+		fmt.Println("No condition is specified")
+		os.Exit(1)
+	}
 	raw, err := ioutil.ReadFile("./data/pokemon.json")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -55,17 +58,24 @@ func getPokemonData() {
 	}
 	var monsters []Monster
 	json.Unmarshal(raw, &monsters)
-	for _, monster := range monsters {
+	var results []*Monster
+	for i := 0; i < len(monsters); i++ {
+		if strings.Contains(monsters[i].Name, name) {
+			results = append(results, &monsters[i])
+		}
+	}
+
+	for _, result := range results {
 		fmt.Println("--------------------------------------------")
-		fmt.Println("No." + strconv.Itoa(monster.Number))
-		fmt.Println("Name: " + monster.Name)
-		fmt.Println("H: " + strconv.Itoa(monster.HitPoint))
-		fmt.Println("A: " + strconv.Itoa(monster.Attack))
-		fmt.Println("B: " + strconv.Itoa(monster.Defense))
-		fmt.Println("C: " + strconv.Itoa(monster.SpecialAttack))
-		fmt.Println("D: " + strconv.Itoa(monster.SpecialDefense))
-		fmt.Println("S: " + strconv.Itoa(monster.Speed))
-		fmt.Printf("types: %v\n", monster.Types)
+		fmt.Println("No." + strconv.Itoa(result.Number))
+		fmt.Println("Name: " + result.Name)
+		fmt.Println("H: " + strconv.Itoa(result.HitPoint))
+		fmt.Println("A: " + strconv.Itoa(result.Attack))
+		fmt.Println("B: " + strconv.Itoa(result.Defense))
+		fmt.Println("C: " + strconv.Itoa(result.SpecialAttack))
+		fmt.Println("D: " + strconv.Itoa(result.SpecialDefense))
+		fmt.Println("S: " + strconv.Itoa(result.Speed))
+		fmt.Printf("types: %v\n", result.Types)
 		fmt.Println("--------------------------------------------")
 	}
 }
@@ -73,6 +83,7 @@ func getPokemonData() {
 func init() {
 	rootCmd.AddCommand(findCmd)
 
+	findCmd.Flags().StringVar(&name, "name", "", "Pokemon name condition. Executes a partial match search for Pokemon name value specified in this flag.")
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
